@@ -15,6 +15,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final double _totalExpenses = 3250000; // Total pengeluaran bulan ini
   final double _savings = 1500000; // Tabungan bulan ini
 
+  // Data cicilan aktif - akan digunakan untuk menampilkan "Pengeluaran Tetap"
+  final List<Map<String, dynamic>> _activeInstallments = [
+    {
+      'name': 'Cicilan Motor',
+      'amount': 750000.0,
+      'remainingMonths': 18,
+      'totalMonths': 24,
+      'icon': Icons.two_wheeler,
+      'color': Colors.blue,
+    },
+    {
+      'name': 'Cicilan Rumah',
+      'amount': 2500000.0,
+      'remainingMonths': 180,
+      'totalMonths': 240,
+      'icon': Icons.home,
+      'color': Colors.green,
+    },
+    {
+      'name': 'Cicilan Gadget',
+      'amount': 450000.0,
+      'remainingMonths': 6,
+      'totalMonths': 12,
+      'icon': Icons.smartphone,
+      'color': Colors.purple,
+    },
+  ];
+
+  // Getter untuk total cicilan bulanan
+  double get _totalInstallments {
+    return _activeInstallments.fold(
+      0.0,
+      (sum, installment) => sum + (installment['amount'] as double),
+    );
+  }
+
+  // Getter untuk mengecek apakah ada cicilan aktif
+  bool get _hasActiveInstallments => _activeInstallments.isNotEmpty;
+
   // Data pengeluaran per kategori
   final Map<String, Map<String, dynamic>> _expenseCategories = {
     'Makanan': {
@@ -317,29 +356,71 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   // Summary cards dengan informasi overview
   Widget _buildSummaryCards() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildSummaryCard(
-            'Gaji Bulan Ini',
-            CurrencyFormatter.format(_monthlySalary),
-            Icons.account_balance_wallet,
-            Colors.green,
-            'Diterima 1 Jul 2025',
+    if (_hasActiveInstallments) {
+      // Jika ada cicilan aktif, tampilkan 3 kartu dalam grid
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildSummaryCard(
+                  'Gaji Bulan Ini',
+                  CurrencyFormatter.format(_monthlySalary),
+                  Icons.account_balance_wallet,
+                  Colors.green,
+                  'Diterima 1 Jul 2025',
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildSummaryCard(
+                  'Total Pengeluaran',
+                  CurrencyFormatter.format(_totalExpenses),
+                  Icons.money_off,
+                  Colors.red,
+                  '${_expenseCategories.length} kategori',
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildSummaryCard(
-            'Total Pengeluaran',
-            CurrencyFormatter.format(_totalExpenses),
-            Icons.money_off,
-            Colors.red,
-            '${_expenseCategories.length} kategori',
+          const SizedBox(height: 16),
+          // Kartu Pengeluaran Tetap (hanya muncul jika ada cicilan aktif)
+          _buildSummaryCard(
+            'Pengeluaran Tetap',
+            CurrencyFormatter.format(_totalInstallments),
+            Icons.credit_card,
+            Colors.amber,
+            '${_activeInstallments.length} cicilan aktif',
+            onTap: () => _showActiveInstallments(),
           ),
-        ),
-      ],
-    );
+        ],
+      );
+    } else {
+      // Jika tidak ada cicilan aktif, tampilkan 2 kartu seperti biasa
+      return Row(
+        children: [
+          Expanded(
+            child: _buildSummaryCard(
+              'Gaji Bulan Ini',
+              CurrencyFormatter.format(_monthlySalary),
+              Icons.account_balance_wallet,
+              Colors.green,
+              'Diterima 1 Jul 2025',
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildSummaryCard(
+              'Total Pengeluaran',
+              CurrencyFormatter.format(_totalExpenses),
+              Icons.money_off,
+              Colors.red,
+              '${_expenseCategories.length} kategori',
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   // Individual summary card component
@@ -348,62 +429,67 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String amount,
     IconData icon,
     Color color,
-    String subtitle,
-  ) {
+    String subtitle, {
+    VoidCallback? onTap,
+  }) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Icon dan title
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Icon dan title
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
                   ),
-                  child: Icon(icon, color: color, size: 20),
+                  const Spacer(),
+                  // Trend indicator (bisa ditambahkan nanti)
+                  Icon(Icons.trending_up, color: color, size: 16),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Title
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
                 ),
-                const Spacer(),
-                // Trend indicator (bisa ditambahkan nanti)
-                Icon(Icons.trending_up, color: color, size: 16),
-              ],
-            ),
-            const SizedBox(height: 12),
-
-            // Title
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-            const SizedBox(height: 4),
+              const SizedBox(height: 4),
 
-            // Amount
-            Text(
-              amount,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
+              // Amount
+              Text(
+                amount,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
+              const SizedBox(height: 4),
 
-            // Subtitle
-            Text(
-              subtitle,
-              style: const TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-          ],
+              // Subtitle
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 10, color: Colors.grey),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -612,6 +698,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             );
           },
         ),
+
+        const SizedBox(height: 24),
+
+        // Fixed expenses card - Pengeluaran Tetap
+        if (_hasActiveInstallments) _buildFixedExpensesCard(),
       ],
     );
   }
@@ -697,6 +788,144 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // Fixed expenses card - Pengeluaran Tetap
+  Widget _buildFixedExpensesCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.red[700],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.attach_money,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'Pengeluaran Tetap',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const Spacer(),
+                // Total installment amount
+                Text(
+                  CurrencyFormatter.format(_totalInstallments),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[700],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Active installments list
+            Column(
+              children: _activeInstallments.map((installment) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: Row(
+                    children: [
+                      // Icon
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: (installment['color'] as Color).withValues(
+                            alpha: 0.1,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          installment['icon'] as IconData,
+                          color: installment['color'] as Color,
+                          size: 24,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Installment details
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              installment['name'] as String,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Sisa ${installment['remainingMonths']} bulan',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Amount
+                      Text(
+                        CurrencyFormatter.format(installment['amount']),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: installment['color'],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Action button to manage installments
+            ElevatedButton.icon(
+              onPressed: () =>
+                  Navigator.pushNamed(context, AppRoutes.transaction),
+              icon: const Icon(Icons.manage_accounts, size: 16),
+              label: const Text('Kelola Cicilan'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[700],
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -979,6 +1208,149 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: const Text('Tutup'),
           ),
         ],
+      ),
+    );
+  }
+
+  // Show active installments details
+  void _showActiveInstallments() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Pengeluaran Tetap',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // Total pengeluaran tetap
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.amber),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.credit_card, color: Colors.amber),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Total Pengeluaran Tetap',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                      Text(
+                        CurrencyFormatter.format(_totalInstallments),
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.amber,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Active installments list
+            const Text(
+              'Cicilan Aktif',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            ...List.generate(_activeInstallments.length, (index) {
+              final installment = _activeInstallments[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: (installment['color'] as Color).withValues(
+                        alpha: 0.1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      installment['icon'] as IconData,
+                      color: installment['color'] as Color,
+                    ),
+                  ),
+                  title: Text(
+                    installment['name'] as String,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    '${installment['remainingMonths']} dari ${installment['totalMonths']} bulan',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        CurrencyFormatter.format(
+                          (installment['amount'] as num).toDouble(),
+                        ),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: installment['color'] as Color,
+                        ),
+                      ),
+                      const Text(
+                        '/bulan',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: 16),
+
+            // Action button
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, AppRoutes.transaction);
+                },
+                icon: const Icon(Icons.list),
+                label: const Text('Lihat Semua Transaksi'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.amber,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
     );
   }
