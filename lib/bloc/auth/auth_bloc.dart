@@ -27,8 +27,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     debugPrint('Login response: ${data?.toJson()}');
 
-    if (data != null && data.accessToken != null) {
+    if (data != null && data.accessToken != null && data.user != null) {
+      User user = data.user!;
+
       AuthConstants.saveToken(data.accessToken!);
+      AuthConstants.saveUserData(
+        userId: user.id!,
+        userName: user.name!,
+        userEmail: user.email!,
+      );
       emit(AuthLoginSuccessListener());
     } else {
       emit(

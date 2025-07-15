@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/auth/auth_bloc.dart';
 import '../routes/app_routes.dart';
-import '../services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -68,7 +67,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
             setState(() {
               _isLoading = false;
             });
-            Navigator.pushReplacementNamed(context, AppRoutes.login);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Registrasi berhasil!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            Future.delayed(const Duration(seconds: 3)).then((_) {
+              if (mounted) {
+                Navigator.pushReplacementNamed(context, AppRoutes.login);
+              }
+            });
           } else if (state is AuthRegisterFailedListener) {
             setState(() {
               _isLoading = false;
