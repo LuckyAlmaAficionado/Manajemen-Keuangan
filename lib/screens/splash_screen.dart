@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes/app_routes.dart';
+import '../constants/auth_constants.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,13 +13,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigateToHome();
+    _checkAuthenticationStatus();
   }
 
-  _navigateToHome() async {
+  _checkAuthenticationStatus() async {
+    // Show splash screen for 3 seconds
     await Future.delayed(const Duration(seconds: 3));
+
     if (mounted) {
-      Navigator.pushReplacementNamed(context, AppRoutes.home);
+      // Check if user is logged in
+      bool isLoggedIn = await AuthConstants.isLoggedIn();
+
+      if (isLoggedIn) {
+        // Navigate to home screen if user is logged in
+        Navigator.pushReplacementNamed(context, AppRoutes.home);
+      } else {
+        // Navigate to login screen if user is not logged in
+        Navigator.pushReplacementNamed(context, AppRoutes.login);
+      }
     }
   }
 

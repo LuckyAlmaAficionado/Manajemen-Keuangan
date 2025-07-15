@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../routes/app_routes.dart';
 import '../screens/splash_screen.dart';
+import '../screens/login_screen.dart';
+import '../screens/register_screen.dart';
 import '../screens/home_screen.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/income_screen.dart';
@@ -20,6 +22,12 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.splash:
         return MaterialPageRoute(builder: (_) => const SplashScreen());
+
+      case AppRoutes.login:
+        return MaterialPageRoute(builder: (_) => const LoginScreen());
+
+      case AppRoutes.register:
+        return MaterialPageRoute(builder: (_) => const RegisterScreen());
 
       case AppRoutes.home:
         return MaterialPageRoute(builder: (_) => const HomeScreen());
